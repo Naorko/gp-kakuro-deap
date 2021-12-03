@@ -24,7 +24,8 @@ def load_board_str(board_string):
     board_size = (int(b) for b in board_string.split(',')[3:5])
     board = ','.join(board_string.split(',')[5:]).replace(' ', '').replace('\n', '')[:-1]
     board = board.replace('[](', '[').replace(')', ']')  # Change parenthesis
-    bx = '[['+ '],['.join([','.join('"' + x + '"' for x in row.split(',')) for row in ('],' + board[1:-1] + ',[').split('],[')[1:-1]]) + ']]'
+    bx = '[[' + '],['.join([','.join('"' + x + '"' for x in row.split(',')) for row in
+                            ('],' + board[1:-1] + ',[').split('],[')[1:-1]]) + ']]'
 
     return np.matrix(json.loads(bx))
 
@@ -106,6 +107,15 @@ def extract_cols(board, labeled_board):
     return cols
 
 
+def extract_row_map(row, cols_map):
+    row_map = []
+    for col_idx, col in enumerate(cols_map):
+        for allele_idx, mapping in enumerate(col):
+            if mapping[0] == row:
+                row_map.append((col_idx, allele_idx))
+    return row_map
+
+
 def extract_board_params(board):
     labeled_board, rows_size = label_rows(board)
     rows_sum = extract_sum(board)
@@ -113,9 +123,10 @@ def extract_board_params(board):
     cols_sum = extract_sum(board.T, is_transposed=True)
     cols_map = extract_cols(board, labeled_board)
     cols_opt = [get_parts(col_sum, col_size) for col_sum, col_size in zip(cols_sum, [len(col) for col in cols_map])]
+    rows_map = [extract_row_map(row, cols_map) for row in range(len(rows_size))]
     # Should now cross-optimize rows_opt and cols_opt
 
-    return rows_size, rows_sum, rows_opt, cols_sum, cols_map, cols_opt
+    return rows_size, rows_sum, rows_opt, cols_sum, cols_map, cols_opt, rows_map
 
 
 def get_parts(row_sum, row_size):
