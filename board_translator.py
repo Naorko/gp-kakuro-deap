@@ -3,6 +3,8 @@ import json
 import numpy as np
 import os
 
+from board import Board
+
 WALL = 'x/x'
 EMPTY_CELL = 'x'
 BOARDS_FILE_PATH = os.path.join('data', 'data_generated_easy.ecl')
@@ -111,6 +113,7 @@ def extract_board_params(board):
     cols_sum = extract_sum(board.T, is_transposed=True)
     cols_map = extract_cols(board, labeled_board)
     cols_opt = [get_parts(col_sum, col_size) for col_sum, col_size in zip(cols_sum, [len(col) for col in cols_map])]
+    # Should now cross-optimize rows_opt and cols_opt
 
     return rows_size, rows_sum, rows_opt, cols_sum, cols_map, cols_opt
 
@@ -125,22 +128,18 @@ def get_parts(row_sum, row_size):
     return parts
 
 
-def get_boards(board_file_path):
-    with open(board_file_path, 'r') as board_file:
+def get_boards():
+    with open(BOARDS_FILE_PATH, 'r') as board_file:
         boards_str = board_file.read()
         boards = boards_str.split('.')
-        boards = [extract_board_params(load_board_str(b)) for b in boards]
+        boards = [Board(*extract_board_params(load_board_str(b))) for b in boards]
         return boards
 
 
 if __name__ == '__main__':
-    boards = get_boards(BOARDS_FILE_PATH)
+    boards = get_boards()
     print(f'There are {len(boards)} in the boards file')
     print()
-    rows_size, rows_sum, rows_opt, cols_sum, cols_map, cols_opt = boards[34]
-    print('rows_size:', rows_size)
-    print('rows_sum:', rows_sum)
-    print('rows_opt:', rows_opt)
-    print('cols_sum:', cols_sum)
-    print('cols_map:', cols_map)
-    print('cols_opt:', cols_opt)
+    board = boards[34]
+    for board_attr, attr_val in board.__dict__.items():
+        print(f'{board_attr}:', attr_val)
