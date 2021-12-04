@@ -19,6 +19,8 @@ def row_add_ass(board: Board, row_idx: Row) -> Board:
 
     row_ass.remove(board.EMPTY_CELL)
     rows_opt = [opt for opt in board.rows_opt[row_idx] if row_ass.issubset(set(opt))]
+    if not rows_opt:  # No valid optional assignment
+        return board
     opt_ass = set(random.choice(rows_opt))
     diff_opt_ass = list(opt_ass - row_ass)
     random.shuffle(diff_opt_ass)
@@ -58,13 +60,18 @@ def random_opt_row_ass(board: Board) -> Board:
 def col_trans(board: Board, col_idx: Col) -> Board:
     if col_idx == INVALID_IDX:
         return board
+
     col_ass = get_col_ass(board, col_idx)
     col_ass_set = set(col_ass)
+
     if Board.EMPTY_CELL not in col_ass:
         return board
 
     col_ass_set.remove(Board.EMPTY_CELL)
     cols_opt = [opt for opt in board.cols_opt[col_idx] if col_ass_set.issubset(set(opt))]
+    if not cols_opt:  # No valid optional assignment
+        return board
+
     opt_ass = set(random.choice(cols_opt))
     diff_opt_ass = list(opt_ass - col_ass_set)
     random.shuffle(diff_opt_ass)
