@@ -4,7 +4,7 @@ from typing import NewType
 class Board(object):
     EMPTY_CELL = -1
 
-    def __init__(self, rows_size, rows_sum, rows_opt, cols_sum, cols_map, cols_opt, rows_map):
+    def __init__(self, rows_size=None, rows_sum=None, rows_opt=None, cols_sum=None, cols_map=None, cols_opt=None, rows_map=None):
         self.rows_size = rows_size
         self.rows_sum = rows_sum
         self.rows_opt = rows_opt
@@ -13,11 +13,12 @@ class Board(object):
         self.cols_opt = cols_opt
         self.rows_map = rows_map
 
-        self.assignment = [[Board.EMPTY_CELL] * row_size for row_size in rows_size]
+        self.assignment = [[Board.EMPTY_CELL] * row_size for row_size in rows_size] if rows_size else None
 
 
-# Row = NewType('Row', int)
-# Col = NewType('Col', int)
+class Row(int):
+    pass
 
-Row = int
-Col = int
+
+class Col(int):
+    pass

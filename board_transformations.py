@@ -85,7 +85,7 @@ def get_invalid_row(board: Board) -> Row:
         if Board.EMPTY_CELL in row_ass or sum(row_ass) != board.rows_sum[row_idx] or row_has_dups(board, row_idx):
             return row_idx
 
-    return INVALID_IDX
+    return Row(INVALID_IDX)
 
 
 def get_invalid_col(board: Board) -> Col:
@@ -96,7 +96,8 @@ def get_invalid_col(board: Board) -> Col:
         if Board.EMPTY_CELL in col_ass or sum(col_ass) != board.cols_sum[col_idx] or col_has_dups(board, col_idx):
             return col_idx
 
-    return INVALID_IDX
+    return Col(INVALID_IDX)
+
 
 def board_is_ok(board: Board) -> bool:
     col_ok, row_ok = get_invalid_col(board), get_invalid_row(board)

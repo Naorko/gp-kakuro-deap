@@ -13,24 +13,26 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from board import Board
-from board_transformations import init_ind, rows_assignment, column_assignment
+from board_transformations import *
 from board_translator import get_boards
 
 SEED = 42
 TRAIN_SIZE = 0.7
 
-MIN_MUTATE_HEIGHT = 0
-MAX_MUTATE_HEIGHT = 2
-TREE_HEIGHT_LIMIT = 17
-
 pset = gp.PrimitiveSetTyped("main", [Board], Board)
-pset.addPrimitive(init_ind, [Board], Board)
-pset.addPrimitive(rows_assignment, [Board, Board], Board)
-pset.addPrimitive(column_assignment, [Board, Board], Board)
+pset.addPrimitive(row_add_ass, [Board, Row], Board)
+pset.addPrimitive(put_mandatory_ass, [Board], Board)
+pset.addPrimitive(col_trans, [Board, Col], Board)
+pset.addPrimitive(get_invalid_row, [Board], Row)
+pset.addPrimitive(get_invalid_col, [Board], Col)
+# pset.addPrimitive(get_invalid_col, [Board], bool)
+
+pset.addTerminal(INVALID_IDX, Row)
+pset.addTerminal(INVALID_IDX, Col)
+pset.renameArguments(ARG0='Board')
 
 creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-creator.create("Individual", gp.PrimitiveSetTyped, fitness=creator.FitnessMin,
+creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMin,
                pset=pset)
 
 stats = None
@@ -204,7 +206,6 @@ def run_GA(pop_size, gen_num=100, cross_pb=0.7, mutation_pb=0.3, verbose=False, 
 
     # Initialize population
     pop = toolbox.population(n=pop_size)
-
     evaluate_population(pop, 0)
     best_fitness = -1
     # Start Generational Loop
@@ -268,6 +269,9 @@ if __name__ == '__main__':
     run_num = inp % 10
     expr_num = inp // 10
 
+    boards = get_boards()
+    train_boards, test_boards = train_test_split(boards, train_size=TRAIN_SIZE, shuffle=True, random_state=SEED)
+
     exprs = [(pop_size, gen_num, mutation_pb, cross_pb, tour_size)
              for pop_size in np.arange(100, 501, 100)
              for gen_num in [500]
@@ -289,9 +293,3 @@ if __name__ == '__main__':
                                                       run_num=run_num)
     best_fitnesses.append(best_fitness)
     generate_plot(logbook, dir_expr_path, run_num)
-
-
-
-if __name__ == '__main__':
-    boards = get_boards()
-    train_boards, test_boards = train_test_split(boards, train_size=TRAIN_SIZE, shuffle=True, random_state=SEED)
