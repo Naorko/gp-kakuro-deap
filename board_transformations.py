@@ -1,6 +1,6 @@
 import random
 import functools
-
+import board
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~transformations~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -65,14 +65,14 @@ def row_is_not_assigned(row):
 
 
 def get_col_ass(board, col_num):
-    return [board.assignment[i, j] for i, j in board.cols_map[col_num]]
+    return [board.assignment[i][j] for i, j in board.cols_map[col_num]]
 
 
 def col_dups_idx(board, col_num):
     col_ass = get_col_ass(board, col_num)
-    dup_indexes = [[] * 9]
+    dup_indexes = [[] for _ in range(10)]
     for idx, ass in enumerate(col_ass):
-        if ass != -1:
+        if ass != board.EMPTY_CELL:
             dup_indexes[ass].append(idx)
 
     return [dups for dups in dup_indexes if len(dups) > 1]
