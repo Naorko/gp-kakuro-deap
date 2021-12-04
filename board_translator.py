@@ -106,6 +106,8 @@ def extract_cols(board, labeled_board):
                 if cur_col:
                     cols.append(cur_col)
                     cur_col = []
+    if cur_col:
+        cols.append(cur_col)
 
     return cols
 
@@ -152,6 +154,11 @@ def get_boards():
 
 if __name__ == '__main__':
     boards = get_boards()
+    for i, b in enumerate(boards):
+        if len(b.cols_sum) != len(b.cols_map) or len(b.cols_sum) != len(b.cols_opt) or len(b.cols_opt) != len(b.cols_map):
+            print(f'Error in board {i}')
+            # for board_attr, attr_val in b.__dict__.items():
+            #     print(f'{board_attr}:', len(attr_val))
     print(f'There are {len(boards)} in the boards file')
     print()
     board = boards[34]
