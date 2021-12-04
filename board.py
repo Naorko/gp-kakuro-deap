@@ -1,3 +1,6 @@
+from typing import NewType
+
+
 class Board(object):
     EMPTY_CELL = -1
 
@@ -13,9 +16,8 @@ class Board(object):
         self.assignment = [[Board.EMPTY_CELL] * row_size for row_size in rows_size]
 
 
-class Row(int):
-    pass
+# Row = NewType('Row', int)
+# Col = NewType('Col', int)
 
-
-class Col(int):
-    pass
+Row = int
+Col = int
