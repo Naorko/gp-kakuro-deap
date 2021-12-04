@@ -53,6 +53,9 @@ def label_rows(board):
                     rows_size.append(col_idx)
                     in_row = False
 
+    if in_row:
+        rows_size.append(col_idx)
+
     return board, rows_size
 
 
