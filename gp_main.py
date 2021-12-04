@@ -37,8 +37,8 @@ creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMin,
 
 stats = None
 toolbox = base.Toolbox()
-executor = ThreadPoolExecutor()
-toolbox.register("map", executor.map)
+# executor = ThreadPoolExecutor()
+# toolbox.register("map", executor.map)
 
 
 def init_population(min_height, max_height):
@@ -82,8 +82,8 @@ def init_evaluator(rows_weight, cols_weight, cols_dup_weight):
     def eval_fitness_tree(tree):
         tree_func = toolbox.compile(expr=tree)
         boards_assigned = toolbox.map(tree_func, train_boards)
-        boards_fitness = toolbox.map(eval_fitness_on_board, boards_assigned)
-        return np.mean(boards_fitness),  # TODO: Normalize
+        boards_fitness = list(toolbox.map(eval_fitness_on_board, boards_assigned))
+        return np.mean(boards_fitness)  # TODO: Normalize
 
     toolbox.register("evaluate", eval_fitness_tree)
 
@@ -156,7 +156,7 @@ def create_offsprings(parents, cross_pb, mutation_pb, dir_expr_path, run_num, to
     # Mutation
     for i in range(len(offsprings)):
         if random.random() < mutation_pb:
-            offsprings[i] = toolbox.mutate(offsprings[i])
+            offsprings[i], = toolbox.mutate(offsprings[i])
             del offsprings[i].fitness.values
 
     if to_dump:
@@ -266,25 +266,25 @@ def generate_plot(logbook, dir_expr_path, run_num):
 # Main
 if __name__ == '__main__':
     inp = int(sys.argv[1])
-    run_num = inp % 10
-    expr_num = inp // 10
+    expr_num = inp % 1000
+    run_num = inp // 1000
 
     boards = get_boards()
     train_boards, test_boards = train_test_split(boards, train_size=TRAIN_SIZE, shuffle=True, random_state=SEED)
 
     exprs = [(pop_size, gen_num, mutation_pb, cross_pb, tour_size)
-             for pop_size in np.arange(100, 501, 100)
-             for gen_num in [500]
+             for pop_size in np.arange(500, 5001, 200)
+             for gen_num in [100]
              for mutation_pb in np.arange(0.3, 0.8, 0.2)
              for cross_pb in np.arange(0.3, 0.8, 0.2)
-             for tour_size in [3, 5, 8]
+             for tour_size in [5, 12, 15]
              ]
 
     pop_size, gen_num, mutation_pb, cross_pb, tour_size = exprs[expr_num]
 
     dir_expr_path = os.path.join('exprs', f'expr-{expr_num}')
     os.makedirs(dir_expr_path, exist_ok=True)
-    init_GP()
+    init_GP(tour_size=tour_size)
 
     best_fitnesses = []
     population, logbook, times, best_fitness = run_GA(pop_size=pop_size, gen_num=gen_num, verbose=True,
