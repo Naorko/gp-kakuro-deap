@@ -11,3 +11,11 @@ class Board(object):
         self.rows_map = rows_map
 
         self.assignment = [[Board.EMPTY_CELL] * row_size for row_size in rows_size]
+
+
+class Row(int):
+    pass
+
+
+class Col(int):
+    pass
