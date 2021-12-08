@@ -55,7 +55,6 @@ def col_is_greater_sum(board, col_num):
 
 
 def col_is_smaller_sum(board, col_num):
-    # TODO:consider to add smart smaller calculator
     col_ass = get_col_ass(board, col_num)
     if -1 in col_ass:
         return False

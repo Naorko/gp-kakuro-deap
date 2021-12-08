@@ -1,6 +1,7 @@
 import operator
 import os
 import sys
+import copy
 from concurrent.futures import ThreadPoolExecutor
 import random
 from datetime import datetime
@@ -35,8 +36,9 @@ creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
 creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMin,
                pset=pset)
 
-stats = None
 toolbox = base.Toolbox()
+
+
 # executor = ThreadPoolExecutor()
 # toolbox.register("map", executor.map)
 
@@ -48,42 +50,16 @@ def init_population(min_height, max_height):
     toolbox.register("compile", gp.compile, pset=pset)
 
 
-def init_evaluator(rows_weight, cols_weight, cols_dup_weight):
-    # arithmetic sequence sum
-    def dup_penalty(n, d=5):
-        return (d * n * (n - 1)) / 2
-
-    def eval_fitness_on_board(board: Board):
-        rows_penalty = 0
-        cols_penalty = 0
-        cols_dup_penalty = 0
-        # rows penalty
-        for row_i, row_size in enumerate(board.rows_size):
-            board_row_sum = sum(board.assignment[row_i])
-            row_penalty = abs(board_row_sum - board.rows_sum[row_i])
-            rows_penalty += row_penalty
-
-        # cols penalty
-        cols = [[board.assignment[row_i][cell_i] for row_i, cell_i in col_idx] for col_idx in board.cols_map]
-        for col_i, col_vals in enumerate(cols):
-            board_col_sum = sum(col_vals)
-            col_penalty = abs(board_col_sum - board.cols_sum[col_i])
-            cols_penalty += col_penalty
-
-            num_occurrences = [0] * 9
-            for col_val in col_vals:
-                num_occurrences[col_val - 1] += 1
-            col_dup_penalty = sum([dup_penalty(n) for n in num_occurrences])
-            cols_dup_penalty += col_dup_penalty
-
-        total_penalty = rows_weight * rows_penalty + cols_weight * cols_penalty + cols_dup_weight * cols_dup_penalty
-        return total_penalty
-
+def init_evaluator(rows_weight, cols_weight, cols_dup_weight, unassignment_weight):
     def eval_fitness_tree(tree):
         tree_func = toolbox.compile(expr=tree)
-        boards_assigned = toolbox.map(tree_func, train_boards)
-        boards_fitness = list(toolbox.map(eval_fitness_on_board, boards_assigned))
-        return np.mean(boards_fitness)  # TODO: Normalize
+        boards = [copy.deepcopy(b) for b in train_boards]
+        boards_assigned = toolbox.map(tree_func, boards)
+        boards_fitness = list(
+            toolbox.map(
+                lambda b: b.eval_fitness_on_board(rows_weight, cols_weight, cols_dup_weight, unassignment_weight),
+                boards_assigned))
+        return np.mean(boards_fitness)
 
     toolbox.register("evaluate", eval_fitness_tree)
 
@@ -108,28 +84,27 @@ def init_bloat_control(height_limit):
 
 
 def init_statistics():
-    global stats
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean)
     stats.register("std", np.std)
     stats.register("min", np.min)
     stats.register("max", np.max)
     stats.register("median", np.median)
+    return stats
 
 
 def init_GP(min_init_height=1, max_init_height=3,
-            rows_weight=0.33, cols_weight=0.33, cols_dup_weight=0.34,
+            rows_weight=0.25, cols_weight=0.25, cols_dup_weight=0.25, unassignment_weight=0.25,
             tour_size=3,
             min_mutate_height=0, max_mutate_height=2,
             height_limit=17
             ):
     init_population(min_init_height, max_init_height)
-    init_evaluator(rows_weight, cols_weight, cols_dup_weight)
+    init_evaluator(rows_weight, cols_weight, cols_dup_weight, unassignment_weight)
     init_selections(tour_size)
     init_crossovers()
     init_mutation(min_mutate_height, max_mutate_height)
     init_bloat_control(height_limit)
-    init_statistics()
 
 
 def create_offsprings(parents, cross_pb, mutation_pb, dir_expr_path, run_num, to_dump=False):
@@ -199,6 +174,7 @@ def run_GA(pop_size, gen_num=100, cross_pb=0.7, mutation_pb=0.3, verbose=False, 
         if verbose:
             print(logbook.stream)
 
+    stats = init_statistics()
     logbook = tools.Logbook()
     times = []
     last_time = datetime.now()
@@ -274,13 +250,13 @@ if __name__ == '__main__':
 
     exprs = [(pop_size, gen_num, mutation_pb, cross_pb, tour_size)
              for pop_size in np.arange(500, 5001, 200)
-             for gen_num in [100]
+             for gen_num in [500]
              for mutation_pb in np.arange(0.3, 0.8, 0.2)
              for cross_pb in np.arange(0.3, 0.8, 0.2)
-             for tour_size in [5, 12, 15]
+             for tour_size in [5, 15]
              ]
 
-    pop_size, gen_num, mutation_pb, cross_pb, tour_size = exprs[expr_num]
+    pop_size, gen_num, mutation_pb, cross_pb, tour_size = exprs[expr_num-1]
 
     dir_expr_path = os.path.join('exprs', f'expr-{expr_num}')
     os.makedirs(dir_expr_path, exist_ok=True)

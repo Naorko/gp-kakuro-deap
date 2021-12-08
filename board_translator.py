@@ -21,13 +21,13 @@ BOARDI = """data(generated,1,-,6,6,
 
 
 def load_board_str(board_string):
-    board_size = (int(b) for b in board_string.split(',')[3:5])
+    board_size = tuple(int(b) for b in board_string.split(',')[3:5])
     board = ','.join(board_string.split(',')[5:]).replace(' ', '').replace('\n', '')[:-1]
     board = board.replace('[](', '[').replace(')', ']')  # Change parenthesis
     bx = '[[' + '],['.join([','.join('"' + x + '"' for x in row.split(',')) for row in
                             ('],' + board[1:-1] + ',[').split('],[')[1:-1]]) + ']]'
 
-    return np.matrix(json.loads(bx))
+    return board_size, np.matrix(json.loads(bx))
 
 
 def label_rows(board):
@@ -121,7 +121,7 @@ def extract_row_map(row, cols_map):
     return row_map
 
 
-def extract_board_params(board):
+def extract_board_params(board_size, board) -> Board:
     labeled_board, rows_size = label_rows(board)
     rows_sum = extract_sum(board)
     rows_opt = [get_parts(row_sum, row_size) for row_sum, row_size in zip(rows_sum, rows_size)]
@@ -130,8 +130,9 @@ def extract_board_params(board):
     cols_opt = [get_parts(col_sum, col_size) for col_sum, col_size in zip(cols_sum, [len(col) for col in cols_map])]
     rows_map = [extract_row_map(row, cols_map) for row in range(len(rows_size))]
     # Should now cross-optimize rows_opt and cols_opt
+    board = Board(board_size, rows_size, rows_sum, rows_opt, cols_sum, cols_map, cols_opt, rows_map)
 
-    return rows_size, rows_sum, rows_opt, cols_sum, cols_map, cols_opt, rows_map
+    return board
 
 
 def get_parts(row_sum, row_size):
@@ -148,7 +149,7 @@ def get_boards():
     with open(BOARDS_FILE_PATH, 'r') as board_file:
         boards_str = board_file.read()
         boards = boards_str.split('.')
-        boards = [Board(*extract_board_params(load_board_str(b))) for b in boards]
+        boards = [extract_board_params(*load_board_str(b)) for b in boards]
         return boards
 
 
