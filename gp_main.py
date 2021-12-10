@@ -5,6 +5,7 @@ import copy
 from concurrent.futures import ThreadPoolExecutor
 import random
 from datetime import datetime
+from typing import Callable
 
 import numpy as np
 from deap import gp
@@ -14,6 +15,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# from board import Attr
 from board_transformations import *
 from board_translator import get_boards
 
@@ -26,8 +28,11 @@ pset.addPrimitive(put_mandatory_ass, [Board], Board)
 pset.addPrimitive(col_trans, [Board, Col], Board)
 pset.addPrimitive(get_invalid_row, [Board], Row)
 pset.addPrimitive(get_invalid_col, [Board], Col)
-# pset.addPrimitive(get_invalid_col, [Board], bool)
+# pset.addPrimitive(board_is_ok, [Board], bool)
+# pset.addPrimitive(while_node, [bool, Board, Callable[[Board, Attr], Board]], Board)
 
+# pset.addTerminal(row_add_ass, Callable[[Board, Row], Board])
+# pset.addTerminal(col_trans, Callable[[Board, Col], Board])
 pset.addTerminal(INVALID_IDX, Row)
 pset.addTerminal(INVALID_IDX, Col)
 pset.renameArguments(ARG0='Board')

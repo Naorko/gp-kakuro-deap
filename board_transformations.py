@@ -10,6 +10,14 @@ INVALID_IDX = -1
 
 # rows transformation
 
+# def while_node(cond: bool, board: Board):
+#     i = 0
+#     while(cond and i < 1000):
+#         board = board
+#         i+=1
+#     return board
+
+
 def row_add_ass(board: Board, row_idx: Row) -> Board:
     if row_idx == INVALID_IDX:
         return board
