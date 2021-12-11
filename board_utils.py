@@ -19,8 +19,7 @@ def row_is_not_assigned(row):
     return Board.EMPTY_CELL in row
 
 
-def get_col_ass(board, col_num):
-    return [board.assignment[i][j] for i, j in board.cols_map[col_num]]
+
 
 
 def ass_dups_idx(assignment):
@@ -32,7 +31,7 @@ def ass_dups_idx(assignment):
 
 
 def col_dups_idx(board, col_num):
-    col_ass = get_col_ass(board, col_num)
+    col_ass = board.get_col_ass(col_num)
     return ass_dups_idx(col_ass)
 
 
@@ -50,12 +49,12 @@ def row_has_dups(board, row_num):
 
 
 def col_is_greater_sum(board, col_num):
-    col_ass = get_col_ass(board, col_num)
+    col_ass = board.get_col_ass(col_num)
     return sum([ass for ass in col_ass if ass != -1]) > board.cols_sum[col_num]
 
 
 def col_is_smaller_sum(board, col_num):
-    col_ass = get_col_ass(board, col_num)
+    col_ass = board.get_col_ass(col_num)
     if -1 in col_ass:
         return False
     return sum(col_ass) < board.cols_sum[col_num]
@@ -64,3 +63,12 @@ def col_is_smaller_sum(board, col_num):
 def get_opt_assignment(board, row_idx):
     for opt in board.rows_opt[row_idx]:
         yield opt
+
+
+def remove_dups_from_ass(ass):
+    num_acc = [0]*9
+    for val in ass:
+        if val != Board.EMPTY_CELL:
+            num_acc[val-1] += 1
+
+    return [val if val == Board.EMPTY_CELL or num_acc[val-1] <= 1 else Board.EMPTY_CELL for val in ass]
