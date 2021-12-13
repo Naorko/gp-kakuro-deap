@@ -19,9 +19,6 @@ def row_is_not_assigned(row):
     return Board.EMPTY_CELL in row
 
 
-
-
-
 def ass_dups_idx(assignment):
     dup_indexes = [[] for _ in range(10)]
     for idx, ass in enumerate(assignment):
@@ -66,9 +63,9 @@ def get_opt_assignment(board, row_idx):
 
 
 def remove_dups_from_ass(ass):
-    num_acc = [0]*9
+    num_acc = [0] * 9
     for val in ass:
         if val != Board.EMPTY_CELL:
-            num_acc[val-1] += 1
+            num_acc[val - 1] += 1
 
-    return [val if val == Board.EMPTY_CELL or num_acc[val-1] <= 1 else Board.EMPTY_CELL for val in ass]
+    return [val if val == Board.EMPTY_CELL or num_acc[val - 1] <= 1 else Board.EMPTY_CELL for val in ass]
