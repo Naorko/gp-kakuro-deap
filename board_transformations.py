@@ -2,11 +2,11 @@ import random
 
 import numpy as np
 
-from board import Board, Col, Row
+from board import Board, Col, Row, Cell
 from board_translator import get_boards
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~transformations~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-from board_utils import get_idx_ass, row_has_dups, col_has_dups, remove_dups_from_ass
+from board_utils import get_idx_ass, row_has_dups, col_has_dups, remove_dups_from_ass, get_poss_ass
 
 INVALID_IDX = -1
 
@@ -28,13 +28,78 @@ def put_mandatory_ass(board: Board) -> Board:
                 board.assignment[row_idx][row_cell] = intersect_opt.pop()
     return board
 
+# cells transformation
+def cell_add_max_ass(board: Board, cell: Cell) -> Board:
+    ass = Board.EMPTY_CELL
+    poss_ass = get_poss_ass(board, cell)
+    if poss_ass:
+        ass = max(poss_ass)
+    board.assignment[cell.row_i][cell.row_j] = ass
+    cell.ass = ass
+    cell.opt_ass.remove(ass)
 
-# def while_node(cond: bool, board: Board):
-#     i = 0
-#     while(cond and i < 1000):
-#         board = board
-#         i+=1
-#     return board
+
+def cell_add_min_ass(board: Board, cell: Cell) -> Board:
+    ass = Board.EMPTY_CELL
+    poss_ass = get_poss_ass(board, cell)
+    if poss_ass:
+        ass = min(poss_ass)
+    board.assignment[cell.row_i][cell.row_j] = ass
+    cell.ass = ass
+    cell.opt_ass.remove(ass)
+
+
+# cells analyze
+
+def get_largest_opt(board: Board) -> Cell:
+    max_opt_cell = None
+    max_opt = -1
+    for (row_i,row_j), cell in board.cells.items():
+        if len(cell.opt_ass) > max_opt:
+            max_opt_cell = cell
+            max_opt = len(cell.opt_ass)
+    return max_opt_cell
+
+def get_smallest_opt(board: Board) -> Cell:
+    min_opt_cell = None
+    min_opt = 10
+    for (row_i,row_j), cell in board.cells.items():
+        if len(cell.opt_ass) < min_opt:
+            min_opt_cell = cell
+            min_opt = len(cell.opt_ass)
+    return min_opt_cell
+
+def get_lowest_ass_row(board: Board) -> Cell:
+    row_idx = None
+    min_empty_cell = 10
+    for row_i, row in enumerate(board.assignment):
+        row_empty_cells = len([cell for cell in row if cell == Board.EMPTY_CELL])
+        if min_empty_cell > row_empty_cells:
+            row_idx = row_i
+            min_empty_cell = row_empty_cells
+
+    empty_cells_idxs = [i for i, val in enumerate(board.assignment[row_idx]) if val == Board.EMPTY_CELL]
+    row_j = 0
+    if empty_cells_idxs:
+        row_j = random.choice(empty_cells_idxs)
+
+    return board.cells[(row_idx,row_j)]
+
+def get_largest_ass_row(board: Board) -> Cell:
+    row_idx = None
+    min_empty_cell = -1
+    for row_i, row in enumerate(board.assignment):
+        row_empty_cells = len([cell for cell in row if cell == Board.EMPTY_CELL])
+        if min_empty_cell < row_empty_cells:
+            row_idx = row_i
+            min_empty_cell = row_empty_cells
+
+    empty_cells_idxs = [i for i, val in enumerate(board.assignment[row_idx]) if val == Board.EMPTY_CELL]
+    row_j = 0
+    if empty_cells_idxs:
+        row_j = random.choice(empty_cells_idxs)
+    return board.cells[(row_idx,row_j)]
+
 
 
 # rows transformation
@@ -240,10 +305,24 @@ def calc_sol2(Board):
     return row_add_ass(row_add_ass(row_add_ass(row_add_ass(row_delete_noopt(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(row_add_ass(col_delete_dup(Board, -1), get_invalid_sum_row(col_add_ass(row_add_ass(col_delete_dup(col_add_ass(Board, -1), get_invalid_sum_col(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), get_invalid_sum_col(Board)))))), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), get_empty_cell_col(Board)))))), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(col_delete_dup(Board, get_empty_cell_col(Board)), -1), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(col_delete_dup(Board, -1), -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))))), get_invalid_sum_row(row_add_ass(row_delete_noopt(col_add_ass(col_delete_dup(Board, -1), get_invalid_sum_col(Board)), -1), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(col_delete_dup(Board, -1), -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))))))))), get_invalid_sum_row(row_add_ass(col_delete_dup(Board, get_empty_cell_col(Board)), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), -1))))), get_invalid_sum_row(row_add_ass(col_delete_dup(Board, get_invalid_sum_col(Board)), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), -1))))), get_invalid_sum_row(Board)), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(row_add_ass(row_add_ass(row_delete_noopt(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(row_add_ass(col_delete_dup(Board, -1), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), get_invalid_sum_col(Board)))))), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), get_empty_cell_col(Board)))))), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(col_delete_dup(Board, -1), -1), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(col_delete_dup(Board, -1), -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))))), get_invalid_sum_row(row_add_ass(row_delete_noopt(col_add_ass(col_delete_dup(Board, -1), get_invalid_sum_col(Board)), -1), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(col_delete_dup(Board, -1), -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))))))))), get_invalid_sum_row(row_add_ass(col_delete_dup(Board, get_empty_cell_col(Board)), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), -1))))), get_invalid_sum_row(row_add_ass(col_delete_dup(Board, -1), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), -1))))), get_invalid_sum_row(row_add_ass(row_add_ass(col_delete_noopt(Board, -1), get_has_dup_row(Board)), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), get_invalid_sum_col(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))))))))), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(row_add_ass(col_delete_dup(Board, -1), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), get_invalid_sum_col(Board)))))), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(Board, get_invalid_sum_row(put_mandatory_ass(Board))), get_invalid_sum_row(Board)), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), get_empty_cell_col(Board)))))), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(col_delete_dup(Board, get_empty_cell_col(Board)), -1), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(col_delete_dup(Board, -1), -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))))), get_invalid_sum_row(row_add_ass(row_delete_noopt(col_add_ass(col_delete_dup(Board, -1), get_invalid_sum_col(Board)), -1), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(col_delete_dup(Board, -1), -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))))))))), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(row_add_ass(col_delete_noopt(col_add_ass(Board, -1), get_empty_cell_col(Board)), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), get_invalid_sum_col(Board)))))), get_invalid_sum_row(row_add_ass(row_delete_noopt(col_delete_dup(Board, get_empty_cell_col(Board)), -1), get_invalid_sum_row(Board))))))))), get_invalid_sum_row(row_add_ass(row_delete_noopt(col_add_ass(col_delete_dup(Board, -1), get_invalid_sum_col(Board)), -1), get_invalid_sum_row(row_add_ass(row_add_ass(row_delete_noopt(col_delete_dup(Board, get_empty_cell_col(Board)), -1), get_invalid_sum_row(Board)), get_invalid_sum_row(row_add_ass(col_delete_dup(Board, -1), get_invalid_sum_row(row_add_ass(row_add_ass(col_delete_dup(Board, -1), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, -1), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), get_invalid_sum_col(Board)))), get_invalid_sum_row(col_add_ass(row_add_ass(row_add_ass(row_delete_noopt(Board, get_empty_cell_row(Board)), get_invalid_sum_row(Board)), get_invalid_sum_row(put_mandatory_ass(Board))), get_invalid_sum_col(Board))))))))))))))
 
 
+def calc_sol_while(Board):
+    i = 0
+    while not board_is_ok(Board) and i <= 10:
+        Board = row_add_ass(row_add_ass(col_add_ass(put_mandatory_ass(Board), get_empty_cell_col(col_delete_dup(col_delete_noopt(row_delete_ass(Board, -1), get_invalid_sum_col(Board)), get_invalid_sum_col(Board)))), get_empty_cell_row(col_delete_dup(col_add_ass(Board, -1), get_has_dup_col(Board)))), get_invalid_sum_row(col_delete_ass(Board, -1)))
+        i+=1
+
+    return Board
+
+
 if __name__ == '__main__':
     board = get_boards()[0]
     # print(board.assignment, board.eval_fitness_on_board(0.2, 0.2, 0.2, 0.2, 0.2))
-    # assigned_board = calc_sol2(board)
-    assigned_board = board
-    assigned_board.assignment = [[1,5,8],[9,8,3,7],[8,9],[3,1],[2,4,9,6],[8,9,6]]
+    assigned_board = calc_sol_while(board)
+    # assigned_board = board
+    # assigned_board.assignment = [[1,5,8],[9,8,3,7],[8,9],[3,1],[2,4,9,6],[8,9,6]]
+    print(np.mean([calc_sol_while(b).eval_fitness_on_board(0.2, 0.2, 0.2, 0.2, 0.2) for b in get_boards()]))
     print(assigned_board.assignment, assigned_board.eval_fitness_on_board(0.2, 0.2, 0.2, 0.2, 0.2))
+    cells = []
+    for cell in board.cells:
+        cells.append(cell.opt_ass)
+    print(cells)

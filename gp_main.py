@@ -69,16 +69,23 @@ def eval_fitness_for_each_board(args):
                                        unassignment_weight)
 
 
+# def eval_once(tree_func,eval_fu)
+
 def eval_fitness_tree(tree, cols_sum_weight, rows_sum_weight, rows_dup_weight, cols_dup_weight, unassignment_weight,
                       train_boards):
     tree_func = toolbox.compile(expr=tree)
+    def eval_b(b: Board):
+        b = tree_func(b)
+        return b.eval_fitness_on_board(rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight,
+                                       unassignment_weight)
+
     boards = [copy.deepcopy(b) for b in train_boards]
-    boards_assigned = toolbox.map(tree_func, boards)
-    boards_fitness = list(
-        toolbox.map(
-            eval_fitness_for_each_board,
-            [(b, rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight, unassignment_weight) for b in
-             boards_assigned]))
+    boards_fitness = toolbox.map(eval_b, boards)
+    # boards_fitness = list(
+    #     toolbox.map(
+    #         eval_fitness_for_each_board,
+    #         [(b, rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight, unassignment_weight) for b in
+    #          boards_assigned]))
     return np.mean(boards_fitness)
 
 
@@ -93,7 +100,7 @@ def evaluate_while(args):
 
 
 def eval_fitness_while_tree(tree, cols_sum_weight, rows_sum_weight, rows_dup_weight, cols_dup_weight, unassignment_weight,
-                      train_boards, while_cap=1000):
+                      train_boards, while_cap):
     tree_func = toolbox.compile(expr=tree)
     boards = [copy.deepcopy(b) for b in train_boards]
     res_eval = toolbox.map(evaluate_while, [(tree_func, board, while_cap) for board in boards])
@@ -109,18 +116,18 @@ def eval_fitness_while_tree(tree, cols_sum_weight, rows_sum_weight, rows_dup_wei
 
 
 def init_evaluator(rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight, unassignment_weight,
-                   train_boards):
+                   train_boards, while_cap):
     toolbox.register("evaluate", eval_fitness_while_tree, rows_sum_weight=rows_sum_weight, rows_dup_weight=rows_dup_weight,
                      cols_sum_weight=cols_sum_weight,
                      cols_dup_weight=cols_dup_weight, unassignment_weight=unassignment_weight,
-                     train_boards=train_boards)
+                     train_boards=train_boards, while_cap=while_cap)
 
 
 def init_selections(tour_size, pars_size=1.4):
     # toolbox.register("select", tools.selTournament, tournsize=tour_size)
     # tools.selDoubleTournament https://deap.readthedocs.io/en/master/api/tools.html#deap.tools.selDoubleTournament
     toolbox.register("select", tools.selDoubleTournament, fitness_size=tour_size, parsimony_size=pars_size,
-                     fitness_first=False)
+                     fitness_first=True)
 
 
 def init_crossovers():
@@ -148,6 +155,7 @@ def init_statistics():
 
 
 def init_GP(train_boards,
+            while_cap=100,
             min_init_height=1, max_init_height=3,
             rows_sum_weight=0.2, rows_dup_weight=0.2, cols_sum_weight=0.2, cols_dup_weight=0.2, unassignment_weight=0.2,
             tour_size=3, pars_size=1.4,
@@ -156,7 +164,7 @@ def init_GP(train_boards,
             ):
     init_population(min_init_height, max_init_height)
     init_evaluator(rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight, unassignment_weight,
-                   train_boards)
+                   train_boards, while_cap)
     init_selections(tour_size, pars_size)
     init_crossovers()
     init_mutation(min_mutate_height, max_mutate_height)
@@ -317,7 +325,7 @@ if __name__ == '__main__':
 
     dir_expr_path = os.path.join('third-exprs-with-size-norm', f'expr-{expr_num}')
     os.makedirs(dir_expr_path, exist_ok=True)
-    init_GP(train_boards, tour_size=tour_size)
+    init_GP(train_boards, tour_size=tour_size, height_limit=10)
     import multiprocessing
 
     pool = multiprocessing.Pool()

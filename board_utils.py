@@ -61,6 +61,15 @@ def get_opt_assignment(board, row_idx):
     for opt in board.rows_opt[row_idx]:
         yield opt
 
+#
+# def get_ass_for_cell(board, row, row_i):
+#     row_ass = board.assignment[row_i]
+#     for col_map in board.cols_map:
+#         for map in col_map:
+#             if map[0]==row_i
+#     col_ass = board.get_col_ass()
+
+
 
 def remove_dups_from_ass(ass):
     num_acc = [0] * 9
@@ -69,3 +78,11 @@ def remove_dups_from_ass(ass):
             num_acc[val - 1] += 1
 
     return [val if val == Board.EMPTY_CELL or num_acc[val - 1] <= 1 else Board.EMPTY_CELL for val in ass]
+
+
+def get_poss_ass(board, cell):
+    row_ass = set([ass for ass in board.assignment[cell.row_i] if ass != Board.EMPTY_CELL])
+    col_ass = set([ass for ass in board.get_col_ass(cell.col_i) if ass != Board.EMPTY_CELL])
+    unioned_row_col = row_ass.union(col_ass)
+    poss_ass = cell.opt_ass - unioned_row_col
+    return poss_ass
