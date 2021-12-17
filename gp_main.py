@@ -56,12 +56,12 @@ pset.addPrimitive(get_smallest_opt, [Board], Cell)
 pset.addPrimitive(get_most_empty_row, [Board], Cell)
 pset.addPrimitive(get_least_empty_row, [Board], Cell)
 # backtrack cell node
-pset.addPrimitive(backtrack_cells, [Board, int], Board)
+pset.addPrimitive(fallback_no_opt, [Board], Board)
 # terminals
 pset.addTerminal(None, Cell)
-for i in range(1, 11):
-    pset.addTerminal(i, int)
-pset.addPrimitive(id, [int], int)
+# for i in range(1, 11):
+#     pset.addTerminal(i, int)
+# pset.addPrimitive(id, [int], int)
 # # ~~~~~~~~~~~~~~~~~Third Experiment~~~~~~~~~~~~~~~~~
 
 # pset.addTerminal(INVALID_IDX, Row)
@@ -191,41 +191,22 @@ def init_GP(train_boards,
     init_bloat_control(height_limit)
 
 
-def create_offsprings(parents, cross_pb, mutation_pb, dir_expr_path, run_num, to_dump=False):
+def create_offsprings(parents, xvr_over_mut_pb, cross_pb, mutation_pb, dir_expr_path, run_num, to_dump=False):
     offsprings = [toolbox.clone(indi) for indi in parents]
     random.shuffle(offsprings)
 
-    # Cross-Over
     for i in range(0, len(offsprings), 2):
-        if random.random() < cross_pb:
-            offsprings[i], offsprings[i + 1] = toolbox.mate(offsprings[i], offsprings[i + 1])
-            del offsprings[i].fitness.values, offsprings[i + 1].fitness.values
-
-    if to_dump:
-        evaluate_fitness(offsprings)
-        fitness_offsprings_after_cross = [ind.fitness.values for ind in offsprings]
-        fitness_values_parents = [ind.fitness.values for ind in parents]
-        best_fitness_offsprings_after_cross = min(fitness_offsprings_after_cross)
-        best_fitness_parents = min(fitness_values_parents)
-        avg_fitness_offsprings_after_cross = np.mean(fitness_offsprings_after_cross)
-        avg_fitness_parents = np.mean(fitness_values_parents)
-        dump_population_before_after(best_fitness_parents, avg_fitness_parents, best_fitness_offsprings_after_cross,
-                                     avg_fitness_offsprings_after_cross, dir_expr_path, run_num, 'cross-over')
-
-    # Mutation
-    for i in range(len(offsprings)):
-        if random.random() < mutation_pb:
-            offsprings[i], = toolbox.mutate(offsprings[i])
-            del offsprings[i].fitness.values
-
-    if to_dump:
-        evaluate_fitness(offsprings)
-        fitness_offsprings_after_mutation = [ind.fitness.values for ind in offsprings]
-        best_fitness_offsprings_after_mutation = min(fitness_offsprings_after_mutation)
-        avg_fitness_offsprings_after_mutation = np.mean(fitness_offsprings_after_mutation)
-        dump_population_before_after(best_fitness_offsprings_after_cross, avg_fitness_offsprings_after_cross,
-                                     best_fitness_offsprings_after_mutation, avg_fitness_offsprings_after_mutation,
-                                     dir_expr_path, run_num, 'mutation')
+        if random.random() < xvr_over_mut_pb:
+            # Cross-Over
+            if random.random() < cross_pb:
+                offsprings[i], offsprings[i + 1] = toolbox.mate(offsprings[i], offsprings[i + 1])
+                del offsprings[i].fitness.values, offsprings[i + 1].fitness.values
+        else:
+            # Mutation
+            for j in [i, i+1]:
+                if random.random() < mutation_pb:
+                    offsprings[j], = toolbox.mutate(offsprings[j])
+                    del offsprings[j].fitness.values
 
     return offsprings
 
@@ -247,7 +228,7 @@ def evaluate_fitness(population):
     return invalid_inds
 
 
-def run_GP(pop_size, gen_num=100, cross_pb=0.7, mutation_pb=0.3, verbose=False, dir_expr_path='.', run_num=0):
+def run_GP(pop_size, gen_num=100, xvr_over_mut_pb=0.5, cross_pb=0.7, mutation_pb=0.3, verbose=False, dir_expr_path='.', run_num=0):
     def evaluate_population(population, gen_idx):
         # Evaluate the individuals with an invalid fitness
         invalid_inds = evaluate_fitness(population)
@@ -279,7 +260,7 @@ def run_GP(pop_size, gen_num=100, cross_pb=0.7, mutation_pb=0.3, verbose=False, 
         # Parental Selection
         parents = toolbox.select(pop, pop_size)
         to_dump = True
-        offsprings = create_offsprings(parents, cross_pb, mutation_pb, dir_expr_path, run_num, to_dump)
+        offsprings = create_offsprings(parents, xvr_over_mut_pb, cross_pb, mutation_pb, dir_expr_path, run_num, to_dump)
 
         # Evaluate the individuals with an invalid fitness
         evaluate_population(offsprings, gen)
@@ -333,17 +314,18 @@ if __name__ == '__main__':
     boards = get_boards()
     train_boards, test_boards = train_test_split(boards, train_size=TRAIN_SIZE, shuffle=True, random_state=SEED)
 
-    exprs = [(pop_size, gen_num, mutation_pb, cross_pb, tour_size)
+    exprs = [(pop_size, gen_num, xvr_over_mut_pb, mutation_pb, cross_pb, tour_size)
              for pop_size in [100]  # np.arange(500, 5001, 200)
              for gen_num in [50]
+             for xvr_over_mut_pb in np.arange(0.3, 0.8, 0.2)
              for mutation_pb in np.arange(0.3, 0.8, 0.2)
              for cross_pb in np.arange(0.3, 0.8, 0.2)
-             for tour_size in [5,15]
+             for tour_size in [15]
              ]
 
-    pop_size, gen_num, mutation_pb, cross_pb, tour_size = exprs[expr_num - 1]
+    pop_size, gen_num, xvr_over_mut_pb, mutation_pb, cross_pb, tour_size = exprs[expr_num - 1]
 
-    dir_expr_path = os.path.join('exprs-cell', f'expr-{expr_num}')
+    dir_expr_path = os.path.join('exprs-cell-fallbackopt', f'expr-{expr_num}')
     os.makedirs(dir_expr_path, exist_ok=True)
     init_GP(train_boards, tour_size=tour_size, height_limit=10)
     import multiprocessing
@@ -353,6 +335,7 @@ if __name__ == '__main__':
 
     best_fitnesses = []
     population, logbook, times, best_fitness = run_GP(pop_size=pop_size, gen_num=gen_num, verbose=True,
+                                                      xvr_over_mut_pb=xvr_over_mut_pb,
                                                       mutation_pb=mutation_pb,
                                                       cross_pb=cross_pb, dir_expr_path=dir_expr_path,
                                                       run_num=run_num)

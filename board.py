@@ -1,5 +1,7 @@
 import numpy as np
 
+from board_utils import get_opt_matrix_lst, EMPTY_CELL, get_poss_ass
+
 
 class Row(int):
     pass
@@ -20,7 +22,6 @@ class Cell(object):
 
 
 class Board(object):
-    EMPTY_CELL = -1
 
     def __init__(self, board_size=None, rows_size=None, rows_sum=None, rows_opt=None, cols_sum=None, cols_map=None,
                  cols_opt=None, rows_map=None):
@@ -34,7 +35,9 @@ class Board(object):
         self.rows_map = rows_map
         self.cols_size = [len(col_map) for col_map in self.cols_map]
         self.size = sum(rows_size)
-        self.assignment = [[Board.EMPTY_CELL] * row_size for row_size in rows_size] if rows_size else None
+        self.assignment = [[EMPTY_CELL] * row_size for row_size in rows_size] if rows_size else None
+        self.row_smart_opt = get_opt_matrix_lst(self.rows_opt)
+        self.col_smart_opt = get_opt_matrix_lst(self.cols_opt)
         self.cells = self.init_cells()
         self.last_ass = []
 
@@ -42,13 +45,11 @@ class Board(object):
         cells = dict()
         for row_i, row in enumerate(self.assignment):
             for row_j, ass in enumerate(row):
-                row_opts = self.rows_opt[row_i]
                 col_i = self.get_col_by_cell(row_i, row_j)
-                cols_opts = self.cols_opt[col_i]
-                unioned_col_opt = set.union(*[set(opt) for opt in cols_opts])
-                unioned_row_opt = set.union(*[set(opt) for opt in row_opts])
-                intersect_opt = unioned_col_opt.intersection(unioned_row_opt)
-                cells[(row_i, row_j)] = Cell(row_i, row_j, ass, intersect_opt, col_i)
+                cell = Cell(row_i, row_j, ass, None, col_i)
+                opt_ass = get_poss_ass(self, cell)
+                cell.opt_ass = opt_ass
+                cells[(row_i, row_j)] = cell
         return cells
 
     def set_assignment(self, cell: Cell, ass: int):
@@ -90,7 +91,7 @@ class Board(object):
         col_rel = [col_size / self.size for col_size in self.cols_size]
         # rows penalty
         for row_i, row_size in enumerate(self.rows_size):
-            board_row_sum = sum([ass for ass in self.assignment[row_i] if ass != Board.EMPTY_CELL])
+            board_row_sum = sum([ass for ass in self.assignment[row_i] if ass != EMPTY_CELL])
             row_sum_penalty = abs(board_row_sum - self.rows_sum[row_i])
             row_sum_penalty /= max((self.rows_size[row_i] * 9 - self.rows_sum[row_i]), self.rows_sum[row_i])
             row_sum_penalty = nthroot(row_sum_penalty)
@@ -114,7 +115,7 @@ class Board(object):
         # cols penalty
         cols = [[self.assignment[row_i][cell_i] for row_i, cell_i in col_idx] for col_idx in self.cols_map]
         for col_i, col_vals in enumerate(cols):
-            board_col_sum = sum([ass for ass in col_vals if ass != Board.EMPTY_CELL])
+            board_col_sum = sum([ass for ass in col_vals if ass != EMPTY_CELL])
             col_sum_penalty = abs(board_col_sum - self.cols_sum[col_i])
             col_sum_penalty /= max((len(self.cols_map[col_i]) * 9 - self.cols_sum[col_i]), self.cols_sum[col_i])
             col_sum_penalty = nthroot(col_sum_penalty)
@@ -136,7 +137,7 @@ class Board(object):
         # cols_dup_penalty /= len(cols)
 
         # unassignment cells penalty
-        unassignment_penalty = sum([1 if ass == Board.EMPTY_CELL else 0 for ass in sum(self.assignment, [])])
+        unassignment_penalty = sum([1 if ass == EMPTY_CELL else 0 for ass in sum(self.assignment, [])])
         unassignment_penalty /= self.size
         unassignment_penalty = np.sqrt(unassignment_penalty)
 

@@ -1,5 +1,7 @@
-from board import Board
+import numpy as np
+import pandas as pd
 
+EMPTY_CELL = -1
 
 def get_idx_ass(board, col_idx, col_cell):
     col_map = board.cols_map[col_idx]
@@ -16,13 +18,13 @@ def get_rand_opt_row_ass(board, row_idx):
 
 
 def row_is_not_assigned(row):
-    return Board.EMPTY_CELL in row
+    return EMPTY_CELL in row
 
 
 def ass_dups_idx(assignment):
     dup_indexes = [[] for _ in range(10)]
     for idx, ass in enumerate(assignment):
-        if ass != Board.EMPTY_CELL:
+        if ass != EMPTY_CELL:
             dup_indexes[ass].append(idx)
     return [dups for dups in dup_indexes if len(dups) > 1]
 
@@ -74,15 +76,41 @@ def get_opt_assignment(board, row_idx):
 def remove_dups_from_ass(ass):
     num_acc = [0] * 9
     for val in ass:
-        if val != Board.EMPTY_CELL:
+        if val != EMPTY_CELL:
             num_acc[val - 1] += 1
 
-    return [val if val == Board.EMPTY_CELL or num_acc[val - 1] <= 1 else Board.EMPTY_CELL for val in ass]
+    return [val if val == EMPTY_CELL or num_acc[val - 1] <= 1 else EMPTY_CELL for val in ass]
+
+
+def get_opt_matrix_lst(opts):
+    smart_opt_lst = []
+    for val_opt in opts:
+        opt_length = len(val_opt)
+        opt_matrix = np.zeros((opt_length, 9), dtype=np.ubyte)
+        for row_idx, opt in enumerate(val_opt):
+            for val in opt:
+                opt_matrix[row_idx][val-1] = 1
+
+        opt_df = pd.DataFrame(opt_matrix, columns=[f'v_{v}' for v in range(1, 10)])
+        smart_opt_lst.append(opt_df)
+
+    return smart_opt_lst
+
+
+def get_poss_opt_by_ass(opt_df, ass):
+    ass = [val for val in ass if val != EMPTY_CELL]
+    if ass:
+        query = ' and '.join([f'v_{a} == 1' for a in ass])
+        df = opt_df.query(query)
+    else:
+        df = opt_df
+
+    return [(i+1, val) for i, val in enumerate(df.sum()) if val > 0 and i+1 not in ass]
 
 
 def get_poss_ass(board, cell):
-    row_ass = set([ass for ass in board.assignment[cell.row_i] if ass != Board.EMPTY_CELL])
-    col_ass = set([ass for ass in board.get_col_ass(cell.col_i) if ass != Board.EMPTY_CELL])
-    unioned_row_col = row_ass.union(col_ass)
-    poss_ass = cell.opt_ass - unioned_row_col
+    row_poss = get_poss_opt_by_ass(board.row_smart_opt[cell.row_i], board.assignment[cell.row_i])
+    col_poss = get_poss_opt_by_ass(board.col_smart_opt[cell.col_i], board.get_col_ass(cell.col_i))
+    poss_ass = [(i, j+y) for i, j in row_poss for x, y in col_poss if i == x]
+
     return poss_ass
