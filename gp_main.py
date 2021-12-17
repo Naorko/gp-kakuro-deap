@@ -20,9 +20,9 @@ SEED = 42
 TRAIN_SIZE = 0.7
 
 pset = gp.PrimitiveSetTyped("main", [Board], Board)
-pset.addPrimitive(put_mandatory_ass, [Board], Board)
-pset.addPrimitive(row_add_ass, [Board, Row], Board)
-pset.addPrimitive(col_add_ass, [Board, Col], Board)
+# pset.addPrimitive(put_mandatory_ass, [Board], Board)
+# pset.addPrimitive(row_add_ass, [Board, Row], Board)
+# pset.addPrimitive(col_add_ass, [Board, Col], Board)
 
 # # ~~~~~~~~~~~~~~~~~First Experiment~~~~~~~~~~~~~~~~~
 # pset.addPrimitive(get_invalid_row, [Board], Row)
@@ -30,23 +30,43 @@ pset.addPrimitive(col_add_ass, [Board, Col], Board)
 # # ~~~~~~~~~~~~~~~~~First Experiment~~~~~~~~~~~~~~~~~
 
 # # ~~~~~~~~~~~~~~~~~Second Experiment~~~~~~~~~~~~~~~~~
-pset.addPrimitive(row_delete_ass, [Board, Row], Board)
-pset.addPrimitive(row_delete_dup, [Board, Row], Board)
-pset.addPrimitive(row_delete_noopt, [Board, Row], Board)
-pset.addPrimitive(col_delete_ass, [Board, Col], Board)
-pset.addPrimitive(col_delete_dup, [Board, Col], Board)
-pset.addPrimitive(col_delete_noopt, [Board, Col], Board)
-pset.addPrimitive(get_empty_cell_row, [Board], Row)
-pset.addPrimitive(get_has_dup_row, [Board], Row)
-pset.addPrimitive(get_invalid_sum_row, [Board], Row)
-pset.addPrimitive(get_empty_cell_col, [Board], Col)
-pset.addPrimitive(get_has_dup_col, [Board], Col)
-pset.addPrimitive(get_invalid_sum_col, [Board], Col)
+# pset.addPrimitive(row_delete_ass, [Board, Row], Board)
+# pset.addPrimitive(row_delete_dup, [Board, Row], Board)
+# pset.addPrimitive(row_delete_noopt, [Board, Row], Board)
+# pset.addPrimitive(col_delete_ass, [Board, Col], Board)
+# pset.addPrimitive(col_delete_dup, [Board, Col], Board)
+# pset.addPrimitive(col_delete_noopt, [Board, Col], Board)
+# pset.addPrimitive(get_empty_cell_row, [Board], Row)
+# pset.addPrimitive(get_has_dup_row, [Board], Row)
+# pset.addPrimitive(get_invalid_sum_row, [Board], Row)
+# pset.addPrimitive(get_empty_cell_col, [Board], Col)
+# pset.addPrimitive(get_has_dup_col, [Board], Col)
+# pset.addPrimitive(get_invalid_sum_col, [Board], Col)
 # # ~~~~~~~~~~~~~~~~~Second Experiment~~~~~~~~~~~~~~~~~
 
 
-pset.addTerminal(INVALID_IDX, Row)
-pset.addTerminal(INVALID_IDX, Col)
+# # ~~~~~~~~~~~~~~~~~Third Experiment~~~~~~~~~~~~~~~~~
+# assignment cell nodes
+pset.addPrimitive(put_mandatory_ass_cell, [Board], Board)
+pset.addPrimitive(cell_add_max_ass, [Board, Cell], Board)
+pset.addPrimitive(cell_add_min_ass, [Board, Cell], Board)
+# select cell nodes
+pset.addPrimitive(get_largest_opt, [Board], Cell)
+pset.addPrimitive(get_smallest_opt, [Board], Cell)
+pset.addPrimitive(get_most_empty_row, [Board], Cell)
+pset.addPrimitive(get_least_empty_row, [Board], Cell)
+# backtrack cell node
+pset.addPrimitive(backtrack_cells, [Board, int], Board)
+# terminals
+pset.addTerminal(None, Cell)
+for i in range(1, 11):
+    pset.addTerminal(i, int)
+pset.addPrimitive(id, [int], int)
+# # ~~~~~~~~~~~~~~~~~Third Experiment~~~~~~~~~~~~~~~~~
+
+# pset.addTerminal(INVALID_IDX, Row)
+# pset.addTerminal(INVALID_IDX, Col)
+
 pset.renameArguments(ARG0='Board')
 
 creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
@@ -323,7 +343,7 @@ if __name__ == '__main__':
 
     pop_size, gen_num, mutation_pb, cross_pb, tour_size = exprs[expr_num - 1]
 
-    dir_expr_path = os.path.join('third-exprs-with-size-norm', f'expr-{expr_num}')
+    dir_expr_path = os.path.join('exprs-cell', f'expr-{expr_num}')
     os.makedirs(dir_expr_path, exist_ok=True)
     init_GP(train_boards, tour_size=tour_size, height_limit=10)
     import multiprocessing
