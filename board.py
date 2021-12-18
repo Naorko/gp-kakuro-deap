@@ -75,20 +75,14 @@ class Board(object):
             # return n-1 if n else 0
             return (d * n * (n - 1)) / 2
 
-        def nthroot(a, n=6):
+        def nthroot(a, n=1):
             return np.power(a, (1 / n))
 
         rows_sum_penalty = 0
-        rows_sum_penalty_lst = []
         rows_dup_penalty = 0
-        rows_dup_penalty_lst = []
         cols_sum_penalty = 0
-        cols_sum_penalty_lst = []
         cols_dup_penalty = 0
-        cols_dup_penalty_lst = []
 
-        row_rel = [row_size / self.size for row_size in self.rows_size]
-        col_rel = [col_size / self.size for col_size in self.cols_size]
         # rows penalty
         for row_i, row_size in enumerate(self.rows_size):
             board_row_sum = sum([ass for ass in self.assignment[row_i] if ass != EMPTY_CELL])
@@ -97,7 +91,6 @@ class Board(object):
             row_sum_penalty = nthroot(row_sum_penalty)
             row_sum_penalty = (self.rows_size[row_i] / self.size) * row_sum_penalty
             rows_sum_penalty += row_sum_penalty
-            rows_sum_penalty_lst.append(row_sum_penalty)
 
             num_occurrences = [0] * 11
             for row_val in [ass for ass in self.assignment[row_i]]:
@@ -107,10 +100,7 @@ class Board(object):
             row_dup_penalty = nthroot(row_dup_penalty)
             row_dup_penalty = (self.rows_size[row_i] / self.size) * row_dup_penalty
             rows_dup_penalty += row_dup_penalty
-            rows_dup_penalty_lst.append(row_dup_penalty)
 
-        # rows_dup_penalty /= len(self.rows_size)
-        # rows_sum_penalty /= len(self.rows_size)
 
         # cols penalty
         cols = [[self.assignment[row_i][cell_i] for row_i, cell_i in col_idx] for col_idx in self.cols_map]
@@ -121,7 +111,6 @@ class Board(object):
             col_sum_penalty = nthroot(col_sum_penalty)
             col_sum_penalty = (self.cols_size[col_i] / self.size) * col_sum_penalty
             cols_sum_penalty += col_sum_penalty
-            cols_sum_penalty_lst.append(col_sum_penalty)
 
             num_occurrences = [0] * 11
             for col_val in [ass for ass in col_vals]:
@@ -131,20 +120,13 @@ class Board(object):
             col_dup_penalty = nthroot(col_dup_penalty)
             col_dup_penalty = (self.cols_size[col_i] / self.size) * col_dup_penalty
             cols_dup_penalty += col_dup_penalty
-            cols_dup_penalty_lst.append(col_dup_penalty)
-
-        # cols_sum_penalty /= len(cols)
-        # cols_dup_penalty /= len(cols)
 
         # unassignment cells penalty
         unassignment_penalty = sum([1 if ass == EMPTY_CELL else 0 for ass in sum(self.assignment, [])])
         unassignment_penalty /= self.size
-        unassignment_penalty = np.sqrt(unassignment_penalty)
+        unassignment_penalty = nthroot(unassignment_penalty)
 
         total_penalty = rows_sum_weight * rows_sum_penalty + rows_dup_weight * rows_dup_penalty \
                         + cols_sum_weight * cols_sum_penalty + cols_dup_weight * cols_dup_penalty \
                         + unassignment_weight * unassignment_penalty
         return total_penalty
-
-# class Attr(int):
-#     pass

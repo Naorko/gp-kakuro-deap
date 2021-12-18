@@ -17,12 +17,9 @@ from board_transformations import *
 from board_translator import get_boards
 
 SEED = 42
-TRAIN_SIZE = 0.7
+TRAIN_SIZE = 0.3
 
 pset = gp.PrimitiveSetTyped("main", [Board], Board)
-# pset.addPrimitive(put_mandatory_ass, [Board], Board)
-# pset.addPrimitive(row_add_ass, [Board, Row], Board)
-# pset.addPrimitive(col_add_ass, [Board, Col], Board)
 
 # # ~~~~~~~~~~~~~~~~~First Experiment~~~~~~~~~~~~~~~~~
 # pset.addPrimitive(get_invalid_row, [Board], Row)
@@ -30,42 +27,45 @@ pset = gp.PrimitiveSetTyped("main", [Board], Board)
 # # ~~~~~~~~~~~~~~~~~First Experiment~~~~~~~~~~~~~~~~~
 
 # # ~~~~~~~~~~~~~~~~~Second Experiment~~~~~~~~~~~~~~~~~
-# pset.addPrimitive(row_delete_ass, [Board, Row], Board)
-# pset.addPrimitive(row_delete_dup, [Board, Row], Board)
-# pset.addPrimitive(row_delete_noopt, [Board, Row], Board)
-# pset.addPrimitive(col_delete_ass, [Board, Col], Board)
-# pset.addPrimitive(col_delete_dup, [Board, Col], Board)
-# pset.addPrimitive(col_delete_noopt, [Board, Col], Board)
-# pset.addPrimitive(get_empty_cell_row, [Board], Row)
-# pset.addPrimitive(get_has_dup_row, [Board], Row)
-# pset.addPrimitive(get_invalid_sum_row, [Board], Row)
-# pset.addPrimitive(get_empty_cell_col, [Board], Col)
-# pset.addPrimitive(get_has_dup_col, [Board], Col)
-# pset.addPrimitive(get_invalid_sum_col, [Board], Col)
+pset.addPrimitive(put_mandatory_ass, [Board], Board)
+pset.addPrimitive(row_add_ass, [Board, Row], Board)
+pset.addPrimitive(col_add_ass, [Board, Col], Board)
+pset.addPrimitive(row_delete_ass, [Board, Row], Board)
+pset.addPrimitive(row_delete_dup, [Board, Row], Board)
+pset.addPrimitive(row_delete_noopt, [Board, Row], Board)
+pset.addPrimitive(col_delete_ass, [Board, Col], Board)
+pset.addPrimitive(col_delete_dup, [Board, Col], Board)
+pset.addPrimitive(col_delete_noopt, [Board, Col], Board)
+pset.addPrimitive(get_empty_cell_row, [Board], Row)
+pset.addPrimitive(get_has_dup_row, [Board], Row)
+pset.addPrimitive(get_invalid_sum_row, [Board], Row)
+pset.addPrimitive(get_empty_cell_col, [Board], Col)
+pset.addPrimitive(get_has_dup_col, [Board], Col)
+pset.addPrimitive(get_invalid_sum_col, [Board], Col)
+pset.addTerminal(INVALID_IDX, Row)
+pset.addTerminal(INVALID_IDX, Col)
 # # ~~~~~~~~~~~~~~~~~Second Experiment~~~~~~~~~~~~~~~~~
 
 
 # # ~~~~~~~~~~~~~~~~~Third Experiment~~~~~~~~~~~~~~~~~
-# assignment cell nodes
-pset.addPrimitive(put_mandatory_ass_cell, [Board], Board)
-pset.addPrimitive(cell_add_max_ass, [Board, Cell], Board)
-pset.addPrimitive(cell_add_min_ass, [Board, Cell], Board)
-# select cell nodes
-pset.addPrimitive(get_largest_opt, [Board], Cell)
-pset.addPrimitive(get_smallest_opt, [Board], Cell)
-pset.addPrimitive(get_most_empty_row, [Board], Cell)
-pset.addPrimitive(get_least_empty_row, [Board], Cell)
-# backtrack cell node
-pset.addPrimitive(fallback_no_opt, [Board], Board)
-# terminals
-pset.addTerminal(None, Cell)
-# for i in range(1, 11):
-#     pset.addTerminal(i, int)
-# pset.addPrimitive(id, [int], int)
+# # assignment cell nodes
+# pset.addPrimitive(put_mandatory_ass_cell, [Board], Board)
+# pset.addPrimitive(cell_add_max_ass, [Board, Cell], Board)
+# pset.addPrimitive(cell_add_min_ass, [Board, Cell], Board)
+# # select cell nodes
+# pset.addPrimitive(get_largest_opt, [Board], Cell)
+# pset.addPrimitive(get_smallest_opt, [Board], Cell)
+# pset.addPrimitive(get_most_empty_row, [Board], Cell)
+# pset.addPrimitive(get_least_empty_row, [Board], Cell)
+# # backtrack cell node
+# pset.addPrimitive(fallback_no_opt, [Board], Board)
+# # terminals
+# pset.addTerminal(None, Cell)
+# # for i in range(1, 11):
+# #     pset.addTerminal(i, int)
+# # pset.addPrimitive(id, [int], int)
 # # ~~~~~~~~~~~~~~~~~Third Experiment~~~~~~~~~~~~~~~~~
 
-# pset.addTerminal(INVALID_IDX, Row)
-# pset.addTerminal(INVALID_IDX, Col)
 
 pset.renameArguments(ARG0='Board')
 
@@ -83,34 +83,7 @@ def init_population(min_height, max_height):
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 
-def eval_fitness_for_each_board(args):
-    board, rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight, unassignment_weight = args
-    return board.eval_fitness_on_board(rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight,
-                                       unassignment_weight)
-
-
-# def eval_once(tree_func,eval_fu)
-
-def eval_fitness_tree(tree, cols_sum_weight, rows_sum_weight, rows_dup_weight, cols_dup_weight, unassignment_weight,
-                      train_boards):
-    tree_func = toolbox.compile(expr=tree)
-    def eval_b(b: Board):
-        b = tree_func(b)
-        return b.eval_fitness_on_board(rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight,
-                                       unassignment_weight)
-
-    boards = [copy.deepcopy(b) for b in train_boards]
-    boards_fitness = toolbox.map(eval_b, boards)
-    # boards_fitness = list(
-    #     toolbox.map(
-    #         eval_fitness_for_each_board,
-    #         [(b, rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight, unassignment_weight) for b in
-    #          boards_assigned]))
-    return np.mean(boards_fitness)
-
-
-def evaluate_while(args):
-    func, board, while_cap = args
+def run_func_while_not_ok(func, board, while_cap):
     i = 0
     while not board_is_ok(board) and i < while_cap:
         board = func(board)
@@ -119,28 +92,32 @@ def evaluate_while(args):
     return board, i
 
 
-def eval_fitness_while_tree(tree, cols_sum_weight, rows_sum_weight, rows_dup_weight, cols_dup_weight, unassignment_weight,
-                      train_boards, while_cap):
+def eval_fitness_while_tree(tree, train_boards, while_cap,
+                            cols_sum_weight, rows_sum_weight,
+                            rows_dup_weight, cols_dup_weight,
+                            unassignment_weight):
     tree_func = toolbox.compile(expr=tree)
+
+    def eval_b(b: Board):
+        b, i = run_func_while_not_ok(tree_func, b, while_cap)
+        b_fit = b.eval_fitness_on_board(rows_sum_weight, rows_dup_weight,
+                                        cols_sum_weight, cols_dup_weight,
+                                        unassignment_weight)
+        i_fit = i/while_cap
+        return 0.9*b_fit + 0.1*i_fit
+
     boards = [copy.deepcopy(b) for b in train_boards]
-    res_eval = toolbox.map(evaluate_while, [(tree_func, board, while_cap) for board in boards])
-    boards_assigned, num_iters = zip(*res_eval)
-    boards_fitness = list(
-        toolbox.map(
-            eval_fitness_for_each_board,
-            [(b, rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight, unassignment_weight) for b in
-             boards_assigned]))
-    iters_fitness = [i/while_cap for i in num_iters]
-    boards_iters_fitness = [0.7*b + 0.3*i for b, i in zip(boards_fitness, iters_fitness)]
-    return np.mean(boards_iters_fitness)
+    boards_fitness = toolbox.map(eval_b, boards)
+    return np.mean(boards_fitness)
 
 
 def init_evaluator(rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight, unassignment_weight,
                    train_boards, while_cap):
-    toolbox.register("evaluate", eval_fitness_while_tree, rows_sum_weight=rows_sum_weight, rows_dup_weight=rows_dup_weight,
-                     cols_sum_weight=cols_sum_weight,
-                     cols_dup_weight=cols_dup_weight, unassignment_weight=unassignment_weight,
-                     train_boards=train_boards, while_cap=while_cap)
+    toolbox.register("evaluate", eval_fitness_while_tree,
+                     train_boards=train_boards, while_cap=while_cap,
+                     rows_sum_weight=rows_sum_weight, rows_dup_weight=rows_dup_weight,
+                     cols_sum_weight=cols_sum_weight, cols_dup_weight=cols_dup_weight,
+                     unassignment_weight=unassignment_weight)
 
 
 def init_selections(tour_size, pars_size=1.4):
@@ -270,8 +247,8 @@ def run_GP(pop_size, gen_num=100, xvr_over_mut_pb=0.5, cross_pb=0.7, mutation_pb
 
         fitness_values = [ind.fitness.values for ind in pop]
         best_fitness = min(fitness_values)
-        # if gen % (gen_num // 10) == 0 or gen == gen_num:
-        dump_population(gen, pop, best_fitness, fitness_values, dir_expr_path, run_num)
+        if gen % (gen_num // 10) == 0 or gen == gen_num:
+            dump_population(gen, pop, best_fitness, fitness_values, dir_expr_path, run_num)
 
     return pop, logbook, times, best_fitness
 
@@ -308,26 +285,26 @@ def generate_plot(logbook, dir_expr_path, run_num):
 # Main
 if __name__ == '__main__':
     inp = int(sys.argv[1])
-    expr_num = inp % 1000
-    run_num = inp // 1000
+    expr_num = inp % 100
+    run_num = (inp // 100)+1
 
     boards = get_boards()
     train_boards, test_boards = train_test_split(boards, train_size=TRAIN_SIZE, shuffle=True, random_state=SEED)
 
     exprs = [(pop_size, gen_num, xvr_over_mut_pb, mutation_pb, cross_pb, tour_size)
-             for pop_size in [100]  # np.arange(500, 5001, 200)
+             for pop_size in [80]  # np.arange(500, 5001, 200)
              for gen_num in [50]
-             for xvr_over_mut_pb in np.arange(0.3, 0.8, 0.2)
-             for mutation_pb in np.arange(0.3, 0.8, 0.2)
-             for cross_pb in np.arange(0.3, 0.8, 0.2)
-             for tour_size in [15]
+             for xvr_over_mut_pb in np.arange(0.4, 0.8, 0.2)
+             for mutation_pb in np.arange(0.4, 0.8, 0.2)
+             for cross_pb in np.arange(0.4, 0.8, 0.2)
+             for tour_size in [5, 10]
              ]
 
     pop_size, gen_num, xvr_over_mut_pb, mutation_pb, cross_pb, tour_size = exprs[expr_num - 1]
 
-    dir_expr_path = os.path.join('exprs-cell-fallbackopt', f'expr-{expr_num}')
+    dir_expr_path = os.path.join('first-exprs-no_sqrt', f'expr-{expr_num}')
     os.makedirs(dir_expr_path, exist_ok=True)
-    init_GP(train_boards, tour_size=tour_size, height_limit=10)
+    init_GP(train_boards, tour_size=tour_size, height_limit=10, while_cap=20)
     import multiprocessing
 
     pool = multiprocessing.Pool()
