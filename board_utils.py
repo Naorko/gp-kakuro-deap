@@ -72,7 +72,6 @@ def get_opt_assignment(board, row_idx):
 #     col_ass = board.get_col_ass()
 
 
-
 def remove_dups_from_ass(ass):
     num_acc = [0] * 9
     for val in ass:
@@ -109,8 +108,24 @@ def get_poss_opt_by_ass(opt_df, ass):
 
 
 def get_poss_ass(board, cell):
+    if cell.ass != EMPTY_CELL:
+        return []
+
     row_poss = get_poss_opt_by_ass(board.row_smart_opt[cell.row_i], board.assignment[cell.row_i])
     col_poss = get_poss_opt_by_ass(board.col_smart_opt[cell.col_i], board.get_col_ass(cell.col_i))
     poss_ass = [(i, j+y) for i, j in row_poss for x, y in col_poss if i == x]
 
     return poss_ass
+
+
+def update_cells_by_rows_cols(board, rows=set(), cols=set()):
+    cells = set()
+    for row in rows:
+        cells |= {(row, j) for j in range(board.rows_size[row])}
+
+    for col in cols:
+        cells |= set(board.cols_map[col])
+
+    for cell_k in cells:
+        cell = board.cells[cell_k]
+        cell.opt_ass = get_poss_ass(board, cell)

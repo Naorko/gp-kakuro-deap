@@ -21,12 +21,8 @@ TRAIN_SIZE = 0.3
 
 pset = gp.PrimitiveSetTyped("main", [Board], Board)
 
-# # ~~~~~~~~~~~~~~~~~First Experiment~~~~~~~~~~~~~~~~~
-# pset.addPrimitive(get_invalid_row, [Board], Row)
-# pset.addPrimitive(get_invalid_col, [Board], Col)
-# # ~~~~~~~~~~~~~~~~~First Experiment~~~~~~~~~~~~~~~~~
 
-# # ~~~~~~~~~~~~~~~~~Second Experiment~~~~~~~~~~~~~~~~~
+# # ~~~~~~~~~~~~~~~~~First Experiment~~~~~~~~~~~~~~~~~
 # pset.addPrimitive(put_mandatory_ass, [Board], Board)
 # pset.addPrimitive(row_add_ass, [Board, Row], Board)
 # pset.addPrimitive(col_add_ass, [Board, Col], Board)
@@ -44,7 +40,7 @@ pset = gp.PrimitiveSetTyped("main", [Board], Board)
 # pset.addPrimitive(get_invalid_sum_col, [Board], Col)
 # pset.addTerminal(INVALID_IDX, Row)
 # pset.addTerminal(INVALID_IDX, Col)
-# # ~~~~~~~~~~~~~~~~~Second Experiment~~~~~~~~~~~~~~~~~
+# # ~~~~~~~~~~~~~~~~~First Experiment~~~~~~~~~~~~~~~~~
 
 
 # # ~~~~~~~~~~~~~~~~~Third Experiment~~~~~~~~~~~~~~~~~
@@ -58,9 +54,13 @@ pset.addPrimitive(get_smallest_opt, [Board], Cell)
 pset.addPrimitive(get_most_empty_row, [Board], Cell)
 pset.addPrimitive(get_least_empty_row, [Board], Cell)
 # backtrack cell node
+pset.addPrimitive(backtrack_cells, [Board, int], Board)
 pset.addPrimitive(fallback_no_opt, [Board], Board)
 # terminals
 pset.addTerminal(None, Cell)
+for i in range(1, 11):
+    pset.addTerminal(i, int)
+pset.addPrimitive(id, [int], int)
 # # ~~~~~~~~~~~~~~~~~Third Experiment~~~~~~~~~~~~~~~~~
 
 
@@ -289,7 +289,7 @@ if __name__ == '__main__':
     train_boards, test_boards = train_test_split(boards, train_size=TRAIN_SIZE, shuffle=True, random_state=SEED)
 
     exprs = [(pop_size, gen_num, xvr_over_mut_pb, mutation_pb, cross_pb, tour_size)
-             for pop_size in [80]  # np.arange(500, 5001, 200)
+             for pop_size in [100]  # np.arange(500, 5001, 200)
              for gen_num in [50]
              for xvr_over_mut_pb in np.arange(0.4, 0.8, 0.2)
              for mutation_pb in np.arange(0.4, 0.8, 0.2)
@@ -299,9 +299,9 @@ if __name__ == '__main__':
 
     pop_size, gen_num, xvr_over_mut_pb, mutation_pb, cross_pb, tour_size = exprs[expr_num - 1]
 
-    dir_expr_path = os.path.join('third-exprs-opt_cells_fallback', f'expr-{expr_num}')
+    dir_expr_path = os.path.join('third', f'expr-{expr_num}')
     os.makedirs(dir_expr_path, exist_ok=True)
-    init_GP(train_boards, tour_size=tour_size, height_limit=10, while_cap=20)
+    init_GP(train_boards, tour_size=tour_size, height_limit=15, while_cap=50)
     import multiprocessing
     print(f'Running with pool of {multiprocessing.cpu_count()}')
     pool = multiprocessing.Pool()

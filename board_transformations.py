@@ -6,7 +6,8 @@ from board import Board, Col, Row, Cell
 from board_translator import get_boards
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~transformations~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-from board_utils import get_idx_ass, row_has_dups, col_has_dups, remove_dups_from_ass, get_poss_ass, EMPTY_CELL
+from board_utils import get_idx_ass, row_has_dups, col_has_dups, remove_dups_from_ass, EMPTY_CELL, \
+    update_cells_by_rows_cols
 
 INVALID_IDX = -1
 
@@ -36,10 +37,12 @@ def put_mandatory_ass(board: Board) -> Board:
 
 def put_mandatory_ass_cell(board: Board) -> Board:
     for cell in board.cells.values():
-        poss_lst = get_poss_ass(board, cell)
+        poss_lst = cell.opt_ass
         if len(poss_lst) == 1:
             (ass, _), = poss_lst
             board.set_assignment(cell, ass)
+            board.last_ass.append(((cell.row_i, cell.row_j), ass))
+            update_cells_by_rows_cols(board, {cell.row_i}, {cell.col_i})
 
     return board
 
@@ -49,12 +52,13 @@ def cell_add_max_ass(board: Board, cell: Cell) -> Board:
     if cell is None:
         return board
 
-    poss_ass = get_poss_ass(board, cell)
+    poss_ass = cell.opt_ass
     if poss_ass:
         ass_idx = np.argmax([cnt for _, cnt in poss_ass])
         ass, _ = poss_ass[ass_idx]
         board.set_assignment(cell, ass)
         board.last_ass.append(((cell.row_i, cell.row_j), ass))
+        update_cells_by_rows_cols(board, {cell.row_i}, {cell.col_i})
 
     return board
 
@@ -63,12 +67,13 @@ def cell_add_min_ass(board: Board, cell: Cell) -> Board:
     if cell is None:
         return board
 
-    poss_ass = get_poss_ass(board, cell)
+    poss_ass = cell.opt_ass
     if poss_ass:
         ass_idx = np.argmin([cnt for _, cnt in poss_ass])
         ass, _ = poss_ass[ass_idx]
         board.set_assignment(cell, ass)
         board.last_ass.append(((cell.row_i, cell.row_j), ass))
+        update_cells_by_rows_cols(board, {cell.row_i}, {cell.col_i})
 
     return board
 
@@ -79,9 +84,11 @@ def get_largest_opt(board: Board) -> Cell:
     max_opt_cell = None
     max_opt = -1
     for _, cell in board.cells.items():
-        if cell.ass == EMPTY_CELL and len(get_poss_ass(board, cell)) > max_opt:
+        opt_len = len(cell.opt_ass)
+        if cell.ass == EMPTY_CELL and opt_len > max_opt:
             max_opt_cell = cell
-            max_opt = len(cell.opt_ass)
+            max_opt = opt_len
+
     return max_opt_cell
 
 
@@ -89,9 +96,11 @@ def get_smallest_opt(board: Board) -> Cell:
     min_opt_cell = None
     min_opt = 10
     for _, cell in board.cells.items():
-        if cell.ass == EMPTY_CELL and len(get_poss_ass(board, cell)) < min_opt:
+        opt_len = len(cell.opt_ass)
+        if cell.ass == EMPTY_CELL and opt_len < min_opt:
             min_opt_cell = cell
-            min_opt = len(cell.opt_ass)
+            min_opt = opt_len
+
     return min_opt_cell
 
 
@@ -132,10 +141,16 @@ def get_least_empty_row(board: Board) -> Cell:
 # fallback cells
 def backtrack_cells(board: Board, steps: int) -> Board:
     board_steps = min(steps, len(board.last_ass))
+    rows_set = set()
+    cols_set = set()
     for _ in range(board_steps):
         cell_i_j, ass = board.last_ass.pop()
         cell = board.cells[cell_i_j]
         board.set_assignment(cell, EMPTY_CELL)
+        rows_set.add(cell.row_i)
+        cols_set.add(cell.col_i)
+
+    update_cells_by_rows_cols(board, rows_set, cols_set)
 
     return board
 
@@ -143,7 +158,10 @@ def backtrack_cells(board: Board, steps: int) -> Board:
 def fallback_no_opt(board: Board) -> Board:
     if board.last_ass:
         for (cell_row_i, cell_row_j), cell in board.cells.items():
-            if cell.ass == EMPTY_CELL and len(get_poss_ass(board, cell)) == 0:
+            rows_set = set()
+            cols_set = set()
+            opt_len = len(cell.opt_ass)
+            if cell.ass == EMPTY_CELL and opt_len == 0:
                 row_cells = [(cell_row_i, j) for j in range(board.rows_size[cell_row_i])]
                 col_cells = board.cols_map[cell.col_i]
                 for i, (cell_ass, _) in enumerate(board.last_ass):
@@ -153,7 +171,11 @@ def fallback_no_opt(board: Board) -> Board:
                 need_to_delete = board.last_ass[i:]
                 board.last_ass = board.last_ass[:i]
                 for del_cell, _ in need_to_delete:
+                    rows_set.add(cell.row_i)
+                    cols_set.add(cell.col_i)
                     board.set_assignment(board.cells[del_cell], EMPTY_CELL)
+
+            update_cells_by_rows_cols(board, rows_set, cols_set)
 
     return board
 
@@ -323,31 +345,6 @@ def get_invalid_sum_col(board: Board) -> Col:
     return Col(INVALID_IDX)
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~first experiment~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_invalid_row(board: Board) -> Row:
-    rows_idxs = list(range(len(board.assignment)))
-    random.shuffle(rows_idxs)
-    for row_idx in rows_idxs:
-        row_ass = board.assignment[row_idx]
-        if EMPTY_CELL in row_ass or sum(row_ass) != board.rows_sum[row_idx] or row_has_dups(board, row_idx):
-            return row_idx
-
-    return Row(INVALID_IDX)
-
-
-def get_invalid_col(board: Board) -> Col:
-    cols_idxs = list(range(len(board.cols_sum)))
-    random.shuffle(cols_idxs)
-    for col_idx in cols_idxs:
-        col_ass = board.get_col_ass(col_idx)
-        if EMPTY_CELL in col_ass or sum(col_ass) != board.cols_sum[col_idx] or col_has_dups(board, col_idx):
-            return col_idx
-
-    return Col(INVALID_IDX)
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~first experiment~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 def board_is_ok(board: Board) -> bool:
     return (np.array([get_empty_cell_col(board), get_has_dup_col(board), get_invalid_sum_col(board),
                       get_empty_cell_row(board), get_has_dup_row(board),
@@ -407,10 +404,20 @@ def calc_sol_while(Board):
 
     return Board, i
 
+def calc_sol_while_cell(Board):
+    i = 0
+    while not board_is_ok(Board) and i <= 100:
+        # Board = cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(put_mandatory_ass_cell(Board))), get_smallest_opt(put_mandatory_ass_cell(Board))), get_smallest_opt(cell_add_max_ass(Board, get_smallest_opt(Board)))), get_most_empty_row(cell_add_max_ass(put_mandatory_ass_cell(put_mandatory_ass_cell(cell_add_max_ass(put_mandatory_ass_cell(cell_add_max_ass(cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(Board)), get_smallest_opt(Board))), get_smallest_opt(put_mandatory_ass_cell(put_mandatory_ass_cell(cell_add_max_ass(Board, None))))))), get_largest_opt(cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(Board, get_smallest_opt(Board)), get_smallest_opt(Board)), get_smallest_opt(cell_add_max_ass(cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(Board)), get_most_empty_row(cell_add_max_ass(Board, get_smallest_opt(Board))))))))))
+        # Board = cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(put_mandatory_ass_cell(Board))), get_smallest_opt(put_mandatory_ass_cell(Board))), get_smallest_opt(cell_add_max_ass(Board, get_smallest_opt(Board)))), get_most_empty_row(cell_add_max_ass(put_mandatory_ass_cell(cell_add_max_ass(backtrack_cells(Board, 2), get_least_empty_row(Board))), get_largest_opt(cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(Board, get_smallest_opt(Board)), get_smallest_opt(put_mandatory_ass_cell(Board))), get_smallest_opt(cell_add_max_ass(cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(Board)), get_most_empty_row(cell_add_max_ass(Board, get_smallest_opt(Board))))))))))
+        Board = cell_add_max_ass(cell_add_min_ass(Board, get_largest_opt(cell_add_max_ass(put_mandatory_ass_cell(cell_add_max_ass(put_mandatory_ass_cell(Board), get_largest_opt(cell_add_max_ass(put_mandatory_ass_cell(Board), get_largest_opt(Board))))), get_largest_opt(Board)))), get_largest_opt(fallback_no_opt(Board)))
+        i += 1
+
+    return Board, i
+
 
 if __name__ == '__main__':
-    # board = get_boards()[0]
-    board = random.choice(get_boards())
+    board = get_boards()[1]
+    # board = random.choice(get_boards())
     # print(board.assignment, board.eval_fitness_on_board(0.2, 0.2, 0.2, 0.2, 0.2))
     # assigned_board = board
     # for _ in range(10):
@@ -426,11 +433,14 @@ if __name__ == '__main__':
     #     #     for row_j in range(len(row)):
     #     #         board.assignment[row_i][row_j] = EMPTY_CELL
 
-    assigned_board, i = calc_sol_while(board)
+    for _ in range(20):
+        board = random.choice(get_boards())
+        assigned_board, i = calc_sol_while(board)
+        print(assigned_board.assignment, assigned_board.eval_fitness_on_board(0.2, 0.2, 0.2, 0.2, 0.2), i)
     # assigned_board.assignment = [[5,8,1],[8,6,9,4],[9,8],[3,1],[7,9,2,3],[9,8,6]]
     # assigned_board.assignment = [[5,8,1],[8,6,9,3],[9,8],[3,1],[7,9,2,3],[9,8,6]]
     # print(np.mean([calc_sol_while(b)[0].eval_fitness_on_board(0.2, 0.2, 0.2, 0.2, 0.2) for b in get_boards()]))
-    print(assigned_board.assignment, assigned_board.eval_fitness_on_board(0.2, 0.2, 0.2, 0.2, 0.2), i)
+
     # cells = []
     # for cell in board.cells:
     #     cells.append(cell.opt_ass)
