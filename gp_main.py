@@ -108,7 +108,7 @@ def eval_fitness_while_tree(tree, train_boards, while_cap,
 
     boards = [copy.deepcopy(b) for b in train_boards]
     boards_fitness = toolbox.map(eval_b, boards)
-    return np.mean(boards_fitness)
+    return np.mean(list(boards_fitness))
 
 
 def init_evaluator(rows_sum_weight, rows_dup_weight, cols_sum_weight, cols_dup_weight, unassignment_weight,
@@ -306,7 +306,7 @@ if __name__ == '__main__':
     os.makedirs(dir_expr_path, exist_ok=True)
     init_GP(train_boards, tour_size=tour_size, height_limit=10, while_cap=20)
     import multiprocessing
-
+    print(f'Running with pool of {multiprocessing.cpu_count()}')
     pool = multiprocessing.Pool()
     toolbox.register("map", pool.map)
 

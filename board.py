@@ -36,9 +36,9 @@ class Board(object):
         self.cols_size = [len(col_map) for col_map in self.cols_map]
         self.size = sum(rows_size)
         self.assignment = [[EMPTY_CELL] * row_size for row_size in rows_size] if rows_size else None
-        self.row_smart_opt = get_opt_matrix_lst(self.rows_opt)
-        self.col_smart_opt = get_opt_matrix_lst(self.cols_opt)
-        self.cells = self.init_cells()
+        # self.row_smart_opt = get_opt_matrix_lst(self.rows_opt)
+        # self.col_smart_opt = get_opt_matrix_lst(self.cols_opt)
+        # self.cells = self.init_cells()
         self.last_ass = []
 
     def init_cells(self):
