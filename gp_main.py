@@ -280,6 +280,51 @@ def generate_plot(logbook, dir_expr_path, run_num):
 
 
 # Main
+def evaluate_test(test_boards):
+    num_of_ok = 0
+    rows_complete = []
+    cols_complete = []
+    for board in test_boards:
+        board, _ = calc_sol_while(board)
+        if board_is_ok(board):
+            num_of_ok += 1
+        else:
+            row_sat = 0
+            for row_i, row in enumerate(board.assignment):
+                if EMPTY_CELL in row:
+                    break
+                if sum(row) != board.rows_sum[row_i]:
+                    break
+                if row_has_dups(board, row_i):
+                    break
+                row_sat += 1
+
+            row_sat /= len(board.rows_sum)
+            rows_complete.append(row_sat)
+
+            col_sat = 0
+            for col_i in range(len(board.cols_size)):
+                ass = board.get_col_ass(col_i)
+                if EMPTY_CELL in ass:
+                    break
+                if sum(ass) != board.cols_sum[col_i]:
+                    break
+                if col_has_dups(board, col_i):
+                    break
+                col_sat += 1
+
+            col_sat /= len(board.cols_sum)
+            cols_complete.append(col_sat)
+
+        return {
+            'OK Boards': num_of_ok/len(test_boards),
+            'Rows Completion (Among not OK) - Average': np.mean(rows_complete),
+            'Rows Completion (Among not OK) - Std': np.std(rows_complete),
+            'Columns Completion (Among not OK) - Average': np.mean(cols_complete),
+            'Columns Completion (Among not OK) - Std': np.mean(cols_complete),
+        }
+
+
 if __name__ == '__main__':
     inp = int(sys.argv[1])
     expr_num = inp % 100
@@ -287,7 +332,11 @@ if __name__ == '__main__':
 
     boards = get_boards()
     train_boards, test_boards = train_test_split(boards, train_size=TRAIN_SIZE, shuffle=True, random_state=SEED)
-
+    # test_results = evaluate_test(test_boards)
+    # for k, res in test_results.items():
+    #     print(f'{k}: {res:.2f}')
+    #
+    # exit()
     exprs = [(pop_size, gen_num, xvr_over_mut_pb, mutation_pb, cross_pb, tour_size)
              for pop_size in [100]  # np.arange(500, 5001, 200)
              for gen_num in [50]

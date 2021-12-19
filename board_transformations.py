@@ -378,31 +378,13 @@ def calc_sol2(Board):
 def calc_sol_while(Board):
     i = 0
     while not board_is_ok(Board) and i <= 100:
-        # Board = cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(put_mandatory_ass_cell(Board))), get_smallest_opt(put_mandatory_ass_cell(Board))), get_smallest_opt(cell_add_max_ass(Board, get_smallest_opt(Board)))), get_most_empty_row(cell_add_max_ass(put_mandatory_ass_cell(put_mandatory_ass_cell(cell_add_max_ass(put_mandatory_ass_cell(cell_add_max_ass(cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(Board)), get_smallest_opt(Board))), get_smallest_opt(put_mandatory_ass_cell(put_mandatory_ass_cell(cell_add_max_ass(Board, None))))))), get_largest_opt(cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(Board, get_smallest_opt(Board)), get_smallest_opt(Board)), get_smallest_opt(cell_add_max_ass(cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(Board)), get_most_empty_row(cell_add_max_ass(Board, get_smallest_opt(Board))))))))))
-        # Board = cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(put_mandatory_ass_cell(Board))), get_smallest_opt(put_mandatory_ass_cell(Board))), get_smallest_opt(cell_add_max_ass(Board, get_smallest_opt(Board)))), get_most_empty_row(cell_add_max_ass(put_mandatory_ass_cell(cell_add_max_ass(backtrack_cells(Board, 2), get_least_empty_row(Board))), get_largest_opt(cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(Board, get_smallest_opt(Board)), get_smallest_opt(put_mandatory_ass_cell(Board))), get_smallest_opt(cell_add_max_ass(cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(Board)), get_most_empty_row(cell_add_max_ass(Board, get_smallest_opt(Board))))))))))
-        Board = cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(put_mandatory_ass_cell(Board),
-                                                                                    get_smallest_opt(
-                                                                                        put_mandatory_ass_cell(
-                                                                                            cell_add_max_ass(Board,
-                                                                                                             get_smallest_opt(
-                                                                                                                 Board))))),
-                                                                   get_smallest_opt(
-                                                                       cell_add_max_ass(backtrack_cells(Board, 7),
-                                                                                        get_most_empty_row(Board)))),
-                                                  get_smallest_opt(cell_add_max_ass(Board, get_smallest_opt(Board)))),
-                                 get_most_empty_row(cell_add_max_ass(put_mandatory_ass_cell(put_mandatory_ass_cell(
-                                     cell_add_max_ass(put_mandatory_ass_cell(cell_add_max_ass(
-                                         cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(Board)),
-                                         get_smallest_opt(Board))), get_smallest_opt(put_mandatory_ass_cell(
-                                         put_mandatory_ass_cell(cell_add_max_ass(Board, None))))))), get_largest_opt(
-                                     cell_add_max_ass(cell_add_max_ass(cell_add_max_ass(Board, get_smallest_opt(Board)),
-                                                                       get_smallest_opt(Board)), get_smallest_opt(
-                                         cell_add_max_ass(
-                                             cell_add_max_ass(put_mandatory_ass_cell(Board), get_smallest_opt(Board)),
-                                             get_most_empty_row(Board))))))))
+        # Board = row_add_ass(row_add_ass(row_delete_noopt(row_delete_dup(put_mandatory_ass(Board), get_invalid_sum_row(Board)), get_empty_cell_row(col_delete_dup(col_delete_noopt(col_delete_noopt(Board, -1), get_invalid_sum_col(Board)), get_invalid_sum_col(Board)))), get_empty_cell_row(col_add_ass(col_add_ass(Board, get_invalid_sum_col(Board)), get_empty_cell_col(Board)))), get_invalid_sum_row(row_add_ass(row_delete_noopt(row_delete_dup(Board, get_invalid_sum_row(Board)), get_empty_cell_row(col_delete_dup(put_mandatory_ass(Board), get_invalid_sum_col(Board)))), get_empty_cell_row(col_add_ass(col_add_ass(Board, -1), get_empty_cell_col(Board))))))
+        # Board = row_delete_ass(row_add_ass(row_delete_ass(Board, -1), get_empty_cell_row(row_add_ass(row_delete_ass(Board, -1), get_empty_cell_row(row_delete_dup(col_add_ass(col_add_ass(row_delete_dup(col_add_ass(col_add_ass(put_mandatory_ass(Board), get_invalid_sum_col(col_delete_dup(col_add_ass(Board, -1), get_has_dup_col(Board)))), get_invalid_sum_col(row_add_ass(row_delete_ass(col_add_ass(row_delete_ass(Board, -1), -1), -1), get_empty_cell_row(Board)))), get_invalid_sum_row(Board)), get_invalid_sum_col(col_delete_dup(col_add_ass(Board, -1), get_has_dup_col(row_delete_noopt(col_delete_noopt(Board, -1), get_has_dup_row(Board)))))), -1), get_invalid_sum_row(Board)))))), get_empty_cell_row(row_add_ass(row_delete_dup(col_add_ass(col_add_ass(put_mandatory_ass(col_delete_noopt(row_delete_ass(Board, -1), get_empty_cell_col(Board))), get_invalid_sum_col(col_delete_dup(col_add_ass(Board, -1), get_has_dup_col(Board)))), get_invalid_sum_col(row_add_ass(row_delete_ass(col_add_ass(row_delete_ass(Board, -1), -1), -1), get_empty_cell_row(Board)))), get_invalid_sum_row(Board)), get_empty_cell_row(row_delete_dup(col_add_ass(row_delete_ass(Board, -1), get_invalid_sum_col(row_add_ass(row_delete_ass(col_add_ass(col_add_ass(row_delete_ass(Board, -1), get_empty_cell_col(Board)), get_invalid_sum_col(row_add_ass(row_delete_ass(Board, -1), get_empty_cell_row(Board)))), -1), get_empty_cell_row(Board)))), get_invalid_sum_row(Board))))))
+        Board = cell_add_max_ass(put_mandatory_ass_cell(put_mandatory_ass_cell(cell_add_max_ass(put_mandatory_ass_cell(put_mandatory_ass_cell(cell_add_max_ass(Board, None))), get_smallest_opt(Board)))), get_most_empty_row(put_mandatory_ass_cell(put_mandatory_ass_cell(cell_add_max_ass(put_mandatory_ass_cell(put_mandatory_ass_cell(Board)), get_smallest_opt(Board))))))
         i += 1
 
     return Board, i
+
 
 def calc_sol_while_cell(Board):
     i = 0
